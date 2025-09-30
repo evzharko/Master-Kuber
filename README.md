@@ -40,7 +40,7 @@ rm /tmp/containerd.tar.gz
 sudo curl -L "https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64" -o /opt/cni/bin/runc
 sudo chmod +x /opt/cni/bin/runc
 
-# Install CNI plugins
+# Install CNI plugins (Container Network Interface)
 wget https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz -O /tmp/cni-plugins.tgz
 sudo tar zxf /tmp/cni-plugins.tgz -C /opt/cni/bin/
 rm /tmp/cni-plugins.tgz
