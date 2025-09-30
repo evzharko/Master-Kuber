@@ -88,22 +88,22 @@ sudo cp /tmp/ca.crt /var/lib/kubelet/pki/ca.crt
 ## 7. Конфігурим CNI файл. Описуємо як саме піднімати мережу для Pod’ів.
 ```bash
    cat <<EOF | sudo tee /etc/cni/net.d/10-mynet.conf
-   {
-   "cniVersion": "0.3.1",
-   "name": "mynet",
-   "type": "bridge",
-   "bridge": "cni0",
-   "isGateway": true,
-   "ipMasq": true,
-   "ipam": {
-   "type": "host-local",
-   "subnet": "10.22.0.0/16",
-   "routes": [
-   { "dst": "0.0.0.0/0" }
-   ]
-   }
-   }
-   EOF
+{
+    "cniVersion": "0.3.1",
+    "name": "mynet",
+    "type": "bridge",
+    "bridge": "cni0",
+    "isGateway": true,
+    "ipMasq": true,
+    "ipam": {
+        "type": "host-local",
+        "subnet": "10.22.0.0/16",
+        "routes": [
+            { "dst": "0.0.0.0/0" }
+        ]
+    }
+}
+EOF
 ```
 
 ## 8. Конфігуремо containerd
