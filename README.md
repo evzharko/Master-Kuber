@@ -11,7 +11,7 @@
    sudo mkdir -p /var/log/kubernetes
    sudo mkdir -p /etc/containerd/
    sudo mkdir -p /run/containerd
-   sudo mkdir -p /opt/cni`
+   sudo mkdir -p /opt/cni
 ```
 
 ## 2. Качаємо компоненти ядра
@@ -160,7 +160,7 @@ EOF
   serverTLSBootstrap: false
   containerRuntimeEndpoint: "unix:///run/containerd/containerd.sock"
   staticPodPath: "/etc/kubernetes/manifests"
-  EOF
+EOF
 ```
 
 ## 10. Стартуємо компоненти
@@ -257,7 +257,7 @@ sudo kubebuilder/bin/kubectl get componentstatuses
 # Check API server health
 sudo kubebuilder/bin/kubectl get --raw='/readyz?verbose'
 # Create Deployment
-sudo  kubebuilder/bin/kubectl create deploy demo --image nginx
+sudo  kubebuilder/bin/kubectl create deploy demo-nginx --image nginx
 # Check all resources
 sudo kubebuilder/bin/kubectl get all -A
 # Debug pods
@@ -266,4 +266,9 @@ sudo kubebuilder/bin/kubectl describe pod demo-677cfb9d49-td8qx
 ## Приклад помилки яз за якою не запускався pod.
 ```bash
 Warning  FailedScheduling  2m16s  default-scheduler  0/1 nodes are available: 1 node(s) had untolerated taint {node.cloudprovider.kubernetes.io/uninitialized: true}. preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+```
+
+## Запуск середовища за допомгою скрипта
+```bash
+sudo bash ./init.sh start
 ```
