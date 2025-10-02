@@ -261,7 +261,7 @@ sudo  kubebuilder/bin/kubectl create deploy demo-nginx --image nginx
 # Check all resources
 sudo kubebuilder/bin/kubectl get all -A
 # Debug pods
-sudo kubebuilder/bin/kubectl describe pod demo-677cfb9d49-td8qx
+sudo kubebuilder/bin/kubectl describe pod etcd-codespaces-f59b8a
 ```
 ## Приклад помилки яз за якою не запускався pod.
 ```bash
