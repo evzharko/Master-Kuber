@@ -271,8 +271,8 @@ Warning  FailedScheduling  2m16s  default-scheduler  0/1 nodes are available: 1 
 ## Запуск середовища за допомгою скрипта
 ```bash
 sudo bash ./init.sh start
-```sudo kubebuilder/bin/kubectl get nodes
-
+sudo kubebuilder/bin/kubectl get nodes
+```
 ## Домашка 2
 
 ```bash
