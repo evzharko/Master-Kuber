@@ -272,3 +272,104 @@ Warning  FailedScheduling  2m16s  default-scheduler  0/1 nodes are available: 1 
 ```bash
 sudo bash ./init.sh start
 ```sudo kubebuilder/bin/kubectl get nodes
+
+## Домашка 2
+
+```bash
+1. Піднімаємо containerd.
+if ! is_running "containerd"; then
+        echo "Starting containerd..."
+        export PATH=$PATH:/opt/cni/bin:kubebuilder/bin
+        sudo PATH=$PATH:/opt/cni/bin:/usr/sbin /opt/cni/bin/containerd -c /etc/containerd/config.toml &
+    fi
+```
+Перевіряємо що працює.
+```bash
+pgrep "containerd"
+...
+@evzharko ➜ /workspaces/Master-Kuber (main) $ pgrep "containerd"
+5981
+8163
+```
+
+2. Піднімаємо kubelet. За допомогою одного kubelet ми можемо запустити інші компоненти control-plain в контейнері.
+Наткнувся на обмеження які були висталвені --max-pods=4. Розширив до 10.
+```bash
+if ! is_running "kubelet"; then
+        echo "Starting kubelet..."
+        sudo PATH=$PATH:/opt/cni/bin:/usr/sbin kubebuilder/bin/kubelet \
+            --kubeconfig=/var/lib/kubelet/kubeconfig \
+            --config=/var/lib/kubelet/config.yaml \
+            --root-dir=/var/lib/kubelet \
+            --cert-dir=/var/lib/kubelet/pki \
+            --tls-cert-file=/var/lib/kubelet/pki/kubelet.crt \
+            --tls-private-key-file=/var/lib/kubelet/pki/kubelet.key \
+            --hostname-override=$(hostname) \
+            --pod-infra-container-image=registry.k8s.io/pause:3.10 \
+            --node-ip=$HOST_IP \
+            --cgroup-driver=cgroupfs \
+            --max-pods=10  \
+            --v=1 &
+    fi
+```
+
+3. Далі підкидуємо manifest з компонентами control-plain
+Тим самим піднімаємо статичні поди якими керує kublet. api server видалти їх не може.
+
+```bash
+# etcd - піднімаємо перший, для зберігання даних клатера
+cp manifest/etcd.yaml /etc/kubernetes/manifests
+
+# Перевіряємо
+@evzharko ➜ /workspaces/Master-Kuber (main) $ pgrep "etcd"
+22967
+
+# api-server
+sudo cp manifest/api-server.yaml /etc/kubernetes/manifests/
+Після цього вже можемо перевіряти запущені контейнери
+
+# scheduler
+sudo cp manifest/scheduler.yaml /etc/kubernetes/manifests/
+
+# control-manager
+sudo cp manifest/control-manager.yaml /etc/kubernetes/manifests/
+```
+
+
+Перевіряємо що все працює.
+```bash
+sudo kubebuilder/bin/kubectl get all -A
+@evzharko ➜ /workspaces/Master-Kuber (main) $ sudo kubebuilder/bin/kubectl get all -A
+NAMESPACE     NAME                                            READY   STATUS    RESTARTS      AGE
+kube-system   pod/etcd-codespaces-f59b8a                      1/1     Running   7 (69m ago)   68m
+kube-system   pod/kube-apiserver-codespaces-f59b8a            1/1     Running   0             67m
+kube-system   pod/kube-controller-manager-codespaces-f59b8a   1/1     Running   0             26s
+kube-system   pod/kube-scheduler-codespaces-f59b8a            1/1     Running   0             24m
+
+NAMESPACE   NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+default     service/kubernetes   ClusterIP   10.0.0.1     <none>        443/TCP   69m
+```
+
+Запускає deployment nginx на 3 репліки.
+```bash
+sudo kubebuilder/bin/kubectl apply -f deploy/nginx-deploy.yaml
+
+sudo kubebuilder/bin/kubectl get all -A
+NAMESPACE     NAME                                            READY   STATUS    RESTARTS      AGE
+default       pod/nginx-deployment-77778dc6b9-6g5bf           1/1     Running   0             5m34s
+default       pod/nginx-deployment-77778dc6b9-dj97c           1/1     Running   0             5m34s
+default       pod/nginx-deployment-77778dc6b9-vmncs           1/1     Running   0             5m34s
+kube-system   pod/etcd-codespaces-f59b8a                      1/1     Running   7 (80m ago)   78m
+kube-system   pod/kube-apiserver-codespaces-f59b8a            1/1     Running   0             78m
+kube-system   pod/kube-controller-manager-codespaces-f59b8a   1/1     Running   0             11m
+kube-system   pod/kube-scheduler-codespaces-f59b8a            1/1     Running   0             35m
+
+NAMESPACE   NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+default     service/kubernetes   ClusterIP   10.0.0.1     <none>        443/TCP   79m
+
+NAMESPACE   NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+default     deployment.apps/nginx-deployment   3/3     3            3           5m34s
+
+NAMESPACE   NAME                                          DESIRED   CURRENT   READY   AGE
+default     replicaset.apps/nginx-deployment-77778dc6b9   3         3         3       5m34s
+```
