@@ -34,7 +34,7 @@ stop_process() {
 
 download_components() {
     # Create necessary directories if they don't exist
-    sudo mkdir -p /kubebuilder/bin
+    sudo mkdir -p ./kubebuilder/bin
     sudo mkdir -p /etc/cni/net.d
     sudo mkdir -p /var/lib/kubelet
     sudo mkdir -p /etc/kubernetes/manifests
@@ -45,7 +45,7 @@ download_components() {
     # Download kubebuilder tools if not present
     if [ ! -f "kubebuilder/bin/etcd" ]; then
         echo "Downloading kubebuilder tools..."
-        curl -L https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.30.0-linux-arm64.tar.gz -o /tmp/kubebuilder-tools.tar.gz
+        curl -L https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.30.0-linux-amd64.tar.gz -o /tmp/kubebuilder-tools.tar.gz
         sudo tar -C ./kubebuilder --strip-components=1 -zxf /tmp/kubebuilder-tools.tar.gz
         rm /tmp/kubebuilder-tools.tar.gz
         sudo chmod -R 755 ./kubebuilder/bin
@@ -53,7 +53,7 @@ download_components() {
 
     if [ ! -f "kubebuilder/bin/kubelet" ]; then
         echo "Downloading kubelet..."
-        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/arm64/kubelet" -o kubebuilder/bin/kubelet
+        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/amd64/kubelet" -o kubebuilder/bin/kubelet
         sudo chmod 755 kubebuilder/bin/kubelet
     fi
 
@@ -62,17 +62,15 @@ download_components() {
         sudo mkdir -p /opt/cni
         
         echo "Installing containerd..."
-#        wget https://github.com/containerd/containerd/releases/download/v2.0.5/containerd-static-2.0.5-linux-arm64.tar.gz -O /tmp/containerd.tar.gz
-        wget https://github.com/containerd/containerd/releases/download/v2.0.5/containerd-static-2.0.5-linux-arm64.tar.gz -O /tmp/containerd.tar.gz
+        wget https://github.com/containerd/containerd/releases/download/v2.0.5/containerd-static-2.0.5-linux-amd64.tar.gz -O /tmp/containerd.tar.gz
         sudo tar zxf /tmp/containerd.tar.gz -C /opt/cni/
         rm /tmp/containerd.tar.gz
 
         echo "Installing runc..."
-#        sudo curl -L "https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.arm64" -o /opt/cni/bin/runc
-        sudo curl -L "https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.arm64" -o /opt/cni/bin/runc
+        sudo curl -L "https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64" -o /opt/cni/bin/runc
 
         echo "Installing CNI plugins..."
-        wget https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-arm64-v1.6.2.tgz -O /tmp/cni-plugins.tgz
+        wget https://github.com/containernetworking/plugins/releases/download/v1.6.2/cni-plugins-linux-amd64-v1.6.2.tgz -O /tmp/cni-plugins.tgz
         sudo tar zxf /tmp/cni-plugins.tgz -C /opt/cni/bin/
         rm /tmp/cni-plugins.tgz
 
@@ -82,9 +80,9 @@ download_components() {
 
     if [ ! -f "kubebuilder/bin/kube-controller-manager" ]; then
         echo "Downloading additional components..."
-        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/arm64/kube-controller-manager" -o kubebuilder/bin/kube-controller-manager
-        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/arm64/kube-scheduler" -o kubebuilder/bin/kube-scheduler
-        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/arm64/cloud-controller-manager" -o kubebuilder/bin/cloud-controller-manager
+        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/amd64/kube-controller-manager" -o kubebuilder/bin/kube-controller-manager
+        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/amd64/kube-scheduler" -o kubebuilder/bin/kube-scheduler
+        sudo curl -L "https://dl.k8s.io/v1.30.0/bin/linux/amd64/cloud-controller-manager" -o kubebuilder/bin/cloud-controller-manager
         sudo chmod 755 kubebuilder/bin/kube-controller-manager
         sudo chmod 755 kubebuilder/bin/kube-scheduler
         sudo chmod 755 kubebuilder/bin/cloud-controller-manager
@@ -94,8 +92,8 @@ download_components() {
 setup_configs() {
     # Generate certificates and tokens if they don't exist
     if [ ! -f "/tmp/sa.key" ]; then
-        sudo openssl genrsa -out /tmp/sa.key 2048
-        sudo openssl rsa -in /tmp/sa.key -pubout -out /tmp/sa.pub
+        openssl genrsa -out /tmp/sa.key 2048
+        openssl rsa -in /tmp/sa.key -pubout -out /tmp/sa.pub
     fi
 
     if [ ! -f "/tmp/token.csv" ]; then
@@ -105,8 +103,8 @@ setup_configs() {
 
     # Always regenerate and copy CA certificate to ensure it exists
     echo "Generating CA certificate..."
-    sudo openssl genrsa -out /tmp/ca.key 2048
-    sudo openssl req -x509 -new -nodes -key /tmp/ca.key -subj "/CN=kubelet-ca" -days 365 -out /tmp/ca.crt
+    openssl genrsa -out /tmp/ca.key 2048
+    openssl req -x509 -new -nodes -key /tmp/ca.key -subj "/CN=kubelet-ca" -days 365 -out /tmp/ca.crt
     sudo mkdir -p /var/lib/kubelet/pki
     sudo cp /tmp/ca.crt /var/lib/kubelet/ca.crt
     sudo cp /tmp/ca.crt /var/lib/kubelet/pki/ca.crt
@@ -314,8 +312,7 @@ start() {
 
     # Label the node so static pods with nodeSelector can be scheduled
     NODE_NAME=$(hostname)
-#    sudo kubebuilder/bin/kubectl label node "$NODE_NAME" node-role.kubernetes.io/master="" --overwrite || true
-    kubebuilder/bin/kubectl label node "$NODE_NAME" node-role.kubernetes.io/master="" --overwrite || true
+    sudo kubebuilder/bin/kubectl label node "$NODE_NAME" node-role.kubernetes.io/master="" --overwrite || true
 
     if ! is_running "kube-controller-manager"; then
         echo "Starting kube-controller-manager..."
