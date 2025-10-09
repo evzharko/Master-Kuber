@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: etcd
+  namespace: kube-system
+  labels:
+    app: etcd
+spec:
+  hostNetwork: true
+  containers:
+    - name: etcd
+      image: docker.io/hubimage/registry-k8s-io-etcd:3.5.9-0
+      imagePullPolicy: IfNotPresent
+      command: ["etcd"]
+      args:
+        - --advertise-client-urls=http://127.0.0.1:2379
+        - --listen-client-urls=http://0.0.0.0:2379
+        - --listen-peer-urls=http://0.0.0.0:2380
+        - --initial-cluster=default=http://127.0.0.1:2380
+        - --initial-advertise-peer-urls=http://127.0.0.1:2380
+        - --initial-cluster-state=new
+        - --initial-cluster-token=test-token
+      ports:
+        - name: client
+          containerPort: 2379
+        - name: peer
+          containerPort: 2380
+      volumeMounts:
+        - name: etcd-data
+          mountPath: /var/lib/etcd
+  volumes:
+    - name: etcd-data
+      hostPath:
+        path: /var/lib/etcd
+        type: DirectoryOrCreate
